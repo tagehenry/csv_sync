@@ -2,6 +2,7 @@ import csv
 from pathlib import Path
 import subprocess
 import pyfiglet
+import pymysql
 
 def grab_csv() -> str:
     # Get location of this script
@@ -42,6 +43,9 @@ def grab_csv() -> str:
         return csv_path
     except KeyboardInterrupt:
         print("\nExiting script..")
+
+def setup_mysql_table():
+    pass
 
 csv_file = grab_csv()
 
