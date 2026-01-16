@@ -22,13 +22,17 @@ def grab_csv() -> str:
         if c:
             csv_dict.update({i: c})
     max_index = len(csv_dict) - 1
-    print(csv_dict)
+    if csv_dict:
+        print(csv_dict)
 
     # Print Header
     ascii_art = pyfiglet.figlet_format("/csv sync/")
     print(ascii_art)
     # Show all files that were found in the csv directory
     print(" Sync csv files in realtime to a SQL database\n")
+    if not csv_dict:
+        print("No files found in the csv directory. Exiting..")
+        exit()
     print(f"Available files:\n{csv_dict}")
     try:
         # Prompt user to choose an existing csv file
