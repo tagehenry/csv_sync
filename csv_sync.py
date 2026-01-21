@@ -3,11 +3,17 @@ from pathlib import Path
 import subprocess
 import pyfiglet
 import pymysql
+import json
+
+def load_db_config() -> dict:
+    if not (Path(script_dir) / "db_config.json").exists():
+        print("No db_config.json detected. Exiting.")
+    db_config = {}
+    with open("db_config.json", "r") as f:
+        data = json.load(f)
+        return data
 
 def grab_csv() -> str:
-    # Get location of this script
-    script_dir = Path(__file__).resolve().parent
-
     # Create path to default "csv" directory 
     csv_file_path = str(Path(script_dir) / "csv")
 
@@ -18,10 +24,10 @@ def grab_csv() -> str:
 
     # Assign index position variables with file {1: 'csv1', 2: 'csv2'}
     csv_dict = {}
-    for i, c in enumerate(csv_list):
+    for i, c in enumerate(csv_list, start=1):
         if c:
             csv_dict.update({i: c})
-    max_index = len(csv_dict) - 1
+    max_index = len(csv_dict)
     if csv_dict:
         print(csv_dict)
 
@@ -37,7 +43,7 @@ def grab_csv() -> str:
     try:
         # Prompt user to choose an existing csv file
         while True:
-            user_answer = int(input(f"Select a CSV file 0-{max_index}: "))
+            user_answer = int(input(f"Select a CSV file 1-{max_index}: "))
             if user_answer <= max_index and user_answer >= 0:
                 break
         csv_path = f"{csv_file_path}/{csv_dict.get(user_answer)}"
@@ -48,9 +54,44 @@ def grab_csv() -> str:
     except KeyboardInterrupt:
         print("\nExiting script..")
 
-def setup_mysql_table():
-    pass
+# Generates the table_config.json. This file is needed so the script knows the table structure 
+def generate_table_config():
+    table_dict = {}
+    table_columns = {}
+    table_name = input(f"Enter desired table name: ")
+    column_number = 1
+    while True:
+        column_name = input(f"Enter column name for column {column_number}: ")
+        table_columns[f"column_{column_number}"] = column_name
+        column_number += 1
+        print(table_columns)
+        answer = input("Would you like to add another column? y/n or q to exit: ")
+        if "q" in answer.lower():
+            exit()
+        if "n" in answer.lower():
+            break
+    # Build the config JSON
+    table_dict["table_name"] = table_name
+    table_dict["header"] = table_columns
+    table_config = json.dumps(table_dict, indent=4)
 
+    # Now write the JSON file
+    with open("table_config.json", "w") as f:
+        f.write(table_config)
+
+def setup_mysql_table():
+    # Was the table_config.json already generated?
+    if not (Path(script_dir) / "table_config.json").exists():
+        # table_config.json does not exist. Generate one now
+        generate_table_config()
+    # Create table 
+
+# Get location of this script
+script_dir = Path(__file__).resolve().parent
+
+db_config = load_db_config()
+
+setup_mysql_table()
 csv_file = grab_csv()
 
 with open(csv_file, 'r') as csv:
